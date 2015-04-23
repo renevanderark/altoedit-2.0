@@ -56,13 +56,14 @@
 
 			$(document).on("keydown", function(e) {
 				if(e.keyCode === 17) { altoedit.ctrlDown = true; }
+				if(e.keyCode === 16) { altoedit.shiftDown = true; }
 				if(altoedit.ctrlDown && e.keyCode === 83) {
 					altoedit.save();
 					return e.preventDefault();
 				}
 			}).on("keyup", function(e) {
 				if(e.keyCode === 17) { altoedit.ctrlDown = false; }
-
+				if(e.keyCode === 16) { altoedit.shiftDown = false; }
 			});
 		</script>
 	</body>

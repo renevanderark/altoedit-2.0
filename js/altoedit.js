@@ -48,6 +48,7 @@ var altoedit = (function(me) {
 		};
 
 	me.ctrlDown = false;
+	me.shiftDown = true;
 
 	function eventPoll() {
 		if(resizeDelay > 0) { resizeDelay--;  }
@@ -256,21 +257,15 @@ var altoedit = (function(me) {
 
 	me.initViewer = function() {
 		input.on("keydown", function(e) {
-			if(e.keyCode === 16) {
-				$(this).attr("data-shift-down", "true");
-			} else if(e.keyCode === 9 && rects["focusRect"]) {
+			if(e.keyCode === 9 && rects["focusRect"]) {
 				$(this).trigger("change");
-				var next = $(this).is("[data-shift-down]") ? rects["focusRect"].prev : rects["focusRect"].next;
+				var next = me.shiftDown ? rects["focusRect"].prev : rects["focusRect"].next;
 				if(next && altoStrings["idmap"][next]) {
 					me.showInput(altoStrings["idmap"][next]);
 				}
 				return e.preventDefault();
 			}
 		}).on("keyup", function(e) {
-			if(e.keyCode === 16) {
-				$(this).removeAttr("data-shift-down");
-			}
-			
 			if($(this).val() !== $(this).attr("data-last-val")) {
 				$(this).trigger("change");
 			}
