@@ -258,7 +258,9 @@ var altoedit = (function(me) {
 	me.initViewer = function() {
 		input.on("keydown", function(e) {
 			if(e.keyCode === 9 && rects["focusRect"]) {
-				$(this).trigger("change");
+				if($(this).val() !== $(this).attr("data-last-val")) {
+					$(this).trigger("change");
+				}
 				var next = me.shiftDown ? rects["focusRect"].prev : rects["focusRect"].next;
 				if(next && altoStrings["idmap"][next]) {
 					me.showInput(altoStrings["idmap"][next]);
