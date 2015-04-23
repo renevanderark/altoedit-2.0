@@ -74,6 +74,7 @@
 				if(e.keyCode === 16) { altoedit.shiftDown = true; }
 				if(altoedit.ctrlDown && e.keyCode === 83) {
 					altoedit.save();
+					altoedit.ctrlDown = false;
 					return e.preventDefault();
 				}
 			}).on("keyup", function(e) {
