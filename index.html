@@ -17,6 +17,22 @@
 		<canvas id="canvas"></canvas>
 		<canvas id="overlay"></canvas>
 		<input id="input" onfocus="this.setSelectionRange(0, this.value.length);" />
+		<div id="alto-string">
+			&lt;String 
+				ID=<input type="text" name="ID" disabled />
+				HPOS=<input type="text" name="HPOS" disabled/>
+				VPOS=<input type="text" name="VPOS" disabled/>
+				WIDTH=<input type="text" name="WIDTH" disabled/>
+				HEIGHT=<input type="text" name="HEIGHT" disabled/>
+				CONTENT=<input type="text" name="CONTENT" disabled />
+				SUBS_CONTENT=<input type="text" name="SUBS_CONTENT" disabled />
+				SUBS_TYPE=<input type="text" name="SUBS_TYPE" disabled />
+				WC=<input type="text" name="WC" disabled /> 
+				CC=<input type="text" name="CC" disabled /> 
+			/&gt;
+
+<String ID="P1_ST00970" HPOS="1016" VPOS="377" WIDTH="71" HEIGHT="32" CONTENT="Ijfelis" WC="0.35" CC="7787508"/>
+		</div>
 		<script type="text/javascript">
 			$.ajax("alto.xml", {
 				success: function(alto) {
@@ -29,7 +45,6 @@
 			$(document).on("keydown", function(e) {
 				console.log(e.keyCode);
 			});
-
 		</script>
 	</body>
 </html>

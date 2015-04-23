@@ -1,5 +1,6 @@
 body {
 	overflow: hidden;
+	font-family: sans-serif;
 }
 #canvas {
 	background-color: #666;
@@ -11,11 +12,18 @@ body {
 }
 #buttons {
 	position: absolute;
-	height: 20px;
+	height: 5px;
+	overflow: hidden;
+	opacity: 0;
 	width: 100%;
 	background-color: white;
 	z-index: 1;
 	
+}
+
+#buttons:hover {
+	height: 25px;
+	opacity: 1;
 }
 #overlay {
 	opacity: 0.8;
@@ -23,4 +31,16 @@ body {
 #input {
 	display: none;
 	position: absolute;
+}
+
+input {
+	width: 80px;
+}
+
+#alto-string {
+	position: absolute;
+	z-index: 1;
+	bottom: 0;
+	background-color:white;
+	width: 100%;
 }

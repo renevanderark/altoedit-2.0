@@ -109,7 +109,7 @@ var altoedit = (function(me) {
 
 	me.resizeToFull = function() {
 		$("canvas")
-			.attr("height", $(window).height())
+			.attr("height", $(window).height() - $("#alto-string").height())
 			.attr("width", $(window).width())
 			.trigger("recalibrate");
 		return me;
@@ -156,6 +156,17 @@ var altoedit = (function(me) {
 			.show()
 			.focus();
 		me.paintOverlay();
+		me.showStringNode($(alto).find("[ID=" + rect.id +"]").get(0));
+	};
+
+	me.showStringNode = function(node) {
+		$("#alto-string input").val("");
+		for(var i in node.attributes) {
+			if(node.attributes[i].nodeValue) {
+				$("#alto-string input[name='" + node.attributes[i].name + "']")
+					.val(node.attributes[i].nodeValue);
+			}
+		}
 	};
 
 	me.repositionInput = function() {
@@ -204,14 +215,16 @@ var altoedit = (function(me) {
 			stringNode.attr("SUBS_CONTENT", subsContent);
 		}
 		stringNode.attr("CONTENT", value);
+		stringNode.attr("WC", "1.0")
+		stringNode.attr("CC", Array(value.length + 1).join("0"));
+		me.showStringNode(stringNode.get(0));
 	};
 	me.save = function() {
 		$.ajax("save.php", {
 			method: "POST",
 			data: (new XMLSerializer()).serializeToString(alto),
-			success: function(resp) {
-				console.log(resp);
-			}
+			success: function() { alert("Opgeslagen");},
+			error: function() { alert("niet opgeslagen"); }
 		});
 	};
 	me.initViewer = function() {
@@ -230,6 +243,7 @@ var altoedit = (function(me) {
 			if(e.keyCode === 16) {
 				$(this).removeAttr("data-shift-down");
 			}
+			$(this).trigger("change");
 		}).on("change", function(e) {
 			rects["focusRect"].content = $(this).val();
 			me.setAltoContent($(alto).find("[ID=" + $(this).attr("data-id") +"]"), $(this).val(), 
