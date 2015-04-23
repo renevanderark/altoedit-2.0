@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="nl">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>Alto Edit</title>
+		<link media="screen" type="text/css" href="css/reset.css" rel="stylesheet">
+		<link media="screen" type="text/css" href="css/style.css" rel="stylesheet">
+		<script type='text/javascript' src='js/jquery-vendor.js'></script>
+		<script type='text/javascript' src='js/jquery.imageviewerclient.js'></script>
+		<script type="text/javascript" src="js/altoedit.js"></script>
+
+	</head>
+	<body>
+		<div id="buttons">
+			<button onclick="altoedit.save()">Opslaan</button>
+		</div>
+		<canvas id="canvas"></canvas>
+		<canvas id="overlay"></canvas>
+		<input id="input" onfocus="this.setSelectionRange(0, this.value.length);" />
+		<script type="text/javascript">
+			$.ajax("alto.xml", {
+				success: function(alto) {
+					altoedit
+						.setCanvas($("#canvas"), $("#overlay"))
+						.init("ddd:010707698:mpeg21:p001", alto, $("#input"));
+				}
+			});
+
+			$(document).on("keydown", function(e) {
+				console.log(e.keyCode);
+			});
+
+		</script>
+	</body>
+</html>
