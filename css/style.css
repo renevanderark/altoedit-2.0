@@ -4,12 +4,18 @@ body {
 }
 #canvas {
 	background-color: #666;
+
 }
 #canvas, #overlay {
 	position: absolute;
 	top: 0px;
 	left: 0;
 }
+#overlay.resiz-ns {
+	cursor: url(resiz-ns.cur), default;
+}
+
+
 #buttons {
 	position: absolute;
 	height: 25px;
