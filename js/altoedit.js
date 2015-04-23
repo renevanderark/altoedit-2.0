@@ -284,11 +284,11 @@ var altoedit = (function(me) {
 				$(this).attr("data-last-val", $(this).val());
 			}).on("keydown", function(e) {
 				if(e.keyCode === 40) {
-					this.value = parseInt(this.value, 10) - 1;
+					this.value = parseInt(this.value, 10) - (me.shiftDown ? 5 : 1);
 					$(this).trigger("change");
 					return e.preventDefault();
 				} else if(e.keyCode === 38) {
-					this.value = parseInt(this.value, 10) + 1;
+					this.value = parseInt(this.value, 10) + (me.shiftDown ? 5 : 1);
 					$(this).trigger("change");
 					return e.preventDefault();
 				}
