@@ -19,13 +19,13 @@
 				<span>ID=</span>
 				<input type="text" name="ID" disabled />
 				<span>HPOS=</span>
-				<input type="text" name="HPOS" />
+				<input type="text" name="HPOS" class="number" />
 				<span>VPOS=</span>
-				<input type="text" name="VPOS" />
+				<input type="text" name="VPOS" class="number" />
 				<span>WIDTH=</span>
-				<input type="text" name="WIDTH" />
+				<input type="text" name="WIDTH" class="number" />
 				<span>HEIGHT=</span>
-				<input type="text" name="HEIGHT" />
+				<input type="text" name="HEIGHT" class="number" />
 				<span>CONTENT=</span>
 				<input type="text" name="CONTENT" disabled />
 				<span>SUBS_CONTENT=</span>
@@ -50,19 +50,18 @@
 				success: function(alto) {
 					altoedit
 						.setCanvas($("#canvas"), $("#overlay"))
-						.init("ddd:010707698:mpeg21:p001", alto, $("#input"));
+						.init("ddd:010707698:mpeg21:p001", alto, $("#input"), $("#alto-string"));
 				}
 			});
 
-			var ctrlDown = false;
 			$(document).on("keydown", function(e) {
-				if(e.keyCode === 17) { ctrlDown = true; }
-				if(ctrlDown && e.keyCode === 83) {
+				if(e.keyCode === 17) { altoedit.ctrlDown = true; }
+				if(altoedit.ctrlDown && e.keyCode === 83) {
 					altoedit.save();
 					return e.preventDefault();
 				}
 			}).on("keyup", function(e) {
-				if(e.keyCode === 17) { ctrlDown = false; }
+				if(e.keyCode === 17) { altoedit.ctrlDown = false; }
 
 			});
 		</script>

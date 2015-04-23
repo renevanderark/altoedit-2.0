@@ -1,6 +1,6 @@
 var altoedit = (function(me) {
 	var canvas, overlay, ctx, alto, input,
-		altoStrings = {},
+		altoStrings = {}, altoStringDiv,
 		rects = {},
 		params = {}, 
 		resizeDelay = -1,
@@ -46,6 +46,8 @@ var altoedit = (function(me) {
 				}
 			}
 		};
+
+	me.ctrlDown = false;
 
 	function eventPoll() {
 		if(resizeDelay > 0) { resizeDelay--;  }
@@ -96,8 +98,9 @@ var altoedit = (function(me) {
 		return me;
 	};
 
-	me.init = function(id, altoDoc, inp) {
+	me.init = function(id, altoDoc, inp, asDiv) {
 		alto = altoDoc;
+		altoStringDiv = asDiv;
 		input = inp;
 		initAltoNodes();
 		params.id = id + ":image";
@@ -109,7 +112,7 @@ var altoedit = (function(me) {
 
 	me.resizeToFull = function() {
 		$("canvas")
-			.attr("height", $(window).height() - $("#buttons").height() - $("#alto-string").height())
+			.attr("height", $(window).height() - $("#buttons").height() - altoStringDiv.height())
 			.attr("width", $(window).width())
 			.trigger("recalibrate");
 		return me;
@@ -161,12 +164,13 @@ var altoedit = (function(me) {
 	};
 
 	me.showStringNode = function(node) {
-		$("#alto-string *").hide();
-		$("#alto-string input").val("");
+		altoStringDiv.find("*").hide();
+		altoStringDiv.find("input").val("");
 		for(var i in node.attributes) {
 			if(node.attributes[i].nodeValue) {
-				$("#alto-string input[name='" + node.attributes[i].name + "']")
+				altoStringDiv.find("input[name='" + node.attributes[i].name + "']")
 					.val(node.attributes[i].nodeValue)
+					.attr("data-last-val", node.attributes[i].nodeValue)
 					.show().prev().show();
 			}
 		}
@@ -230,6 +234,26 @@ var altoedit = (function(me) {
 			error: function() { alert("niet opgeslagen"); }
 		});
 	};
+	me.updateDimension = function(propName, propVal, rect) {
+		var stringNode = $(alto).find("[ID='" + rect.id + "']");
+		stringNode.attr(propName, propVal);
+		switch(propName) {
+			case "HPOS":
+				rect.x = parseInt(propVal, 10);
+				break;
+			case "VPOS":
+				rect.y = parseInt(propVal, 10);
+				break;
+			case "WIDTH":
+				rect.w = parseInt(propVal, 10);
+				break;
+			case "HEIGHT":
+				rect.h = parseInt(propVal, 10);
+				break;
+		}
+		me.paintOverlay();
+	};
+
 	me.initViewer = function() {
 		input.on("keydown", function(e) {
 			if(e.keyCode === 16) {
@@ -256,6 +280,35 @@ var altoedit = (function(me) {
 			me.setAltoContent($(alto).find("[ID=" + $(this).attr("data-id") +"]"), $(this).val(), 
 					rects["focusRect"].prev, rects["focusRect"].next);
 		});
+
+		altoStringDiv.find("input.number").each(function(i, inp) {
+			$(inp).on("keyup", function(e) {
+				if($(this).val() !== $(this).attr("data-last-val")) {
+					$(this).trigger("change");
+				}
+				$(this).attr("data-last-val", $(this).val());
+			}).on("keydown", function(e) {
+				if(e.keyCode === 40) {
+					this.value = parseInt(this.value, 10) - 1;
+					$(this).trigger("change");
+					return e.preventDefault();
+				} else if(e.keyCode === 38) {
+					this.value = parseInt(this.value, 10) + 1;
+					$(this).trigger("change");
+					return e.preventDefault();
+				}
+			}).on("focus", function() {
+				this.setSelectionRange(0, this.value.length);
+			}).on("change", function() {
+				if(!this.value.match(/^[0-9]+$/)) {
+					this.value = $(this).attr("data-last-val");
+					this.setSelectionRange(0, this.value.length);
+				} else {
+					me.updateDimension(this.name, this.value, rects["focusRect"]);
+				}
+			});
+		});
+
 		canvas
 			.imageViewerClient("http://imageviewer.kb.nl/ImagingService/imagingService", {
 				params: params,
