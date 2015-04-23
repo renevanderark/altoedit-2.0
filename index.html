@@ -11,27 +11,39 @@
 
 	</head>
 	<body>
-		<div id="buttons">
-			<button onclick="altoedit.save()">Opslaan</button>
-		</div>
 		<canvas id="canvas"></canvas>
 		<canvas id="overlay"></canvas>
 		<input id="input" onfocus="this.setSelectionRange(0, this.value.length);" />
 		<div id="alto-string">
 			&lt;String 
-				ID=<input type="text" name="ID" disabled />
-				HPOS=<input type="text" name="HPOS" disabled/>
-				VPOS=<input type="text" name="VPOS" disabled/>
-				WIDTH=<input type="text" name="WIDTH" disabled/>
-				HEIGHT=<input type="text" name="HEIGHT" disabled/>
-				CONTENT=<input type="text" name="CONTENT" disabled />
-				SUBS_CONTENT=<input type="text" name="SUBS_CONTENT" disabled />
-				SUBS_TYPE=<input type="text" name="SUBS_TYPE" disabled />
-				WC=<input type="text" name="WC" disabled /> 
-				CC=<input type="text" name="CC" disabled /> 
+				<span>ID=</span>
+				<input type="text" name="ID" disabled />
+				<span>HPOS=</span>
+				<input type="text" name="HPOS" />
+				<span>VPOS=</span>
+				<input type="text" name="VPOS" />
+				<span>WIDTH=</span>
+				<input type="text" name="WIDTH" />
+				<span>HEIGHT=</span>
+				<input type="text" name="HEIGHT" />
+				<span>CONTENT=</span>
+				<input type="text" name="CONTENT" disabled />
+				<span>SUBS_CONTENT=</span>
+				<input type="text" name="SUBS_CONTENT" disabled />
+				<span>SUBS_TYPE=</span>
+				<input type="text" name="SUBS_TYPE" disabled />
+				<span>WC=</span>
+				<input type="text" name="WC" disabled /> 
+				<span>CC=</span>
+				<input type="text" name="CC" disabled /> 
 			/&gt;
-
-<String ID="P1_ST00970" HPOS="1016" VPOS="377" WIDTH="71" HEIGHT="32" CONTENT="Ijfelis" WC="0.35" CC="7787508"/>
+		</div>
+		<div id="buttons">
+			<button onclick="altoedit.save()">Opslaan</button>
+			<input id="wheelMode-scroll" onchange="altoedit.setWheelMode(this.value)" type="radio" name="wheelMode" value="scroll" checked />
+			<label for="wheelMode-scroll">Scrollen</label>
+			<input id="wheelMode-zoom" onchange="altoedit.setWheelMode(this.value)" type="radio" name="wheelMode" value="zoom" />
+			<label for="wheelMode-zoom">Zoomen</label>
 		</div>
 		<script type="text/javascript">
 			$.ajax("alto.xml", {
@@ -42,8 +54,16 @@
 				}
 			});
 
+			var ctrlDown = false;
 			$(document).on("keydown", function(e) {
-				console.log(e.keyCode);
+				if(e.keyCode === 17) { ctrlDown = true; }
+				if(ctrlDown && e.keyCode === 83) {
+					altoedit.save();
+					return e.preventDefault();
+				}
+			}).on("keyup", function(e) {
+				if(e.keyCode === 17) { ctrlDown = false; }
+
 			});
 		</script>
 	</body>

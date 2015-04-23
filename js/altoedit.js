@@ -9,7 +9,7 @@ var altoedit = (function(me) {
 		state = false,
 		lastCursorPos = {x: 0, y: 0},
 		movement = {x: 0, y: 0},
-		wheelMode = "zoom",
+		wheelMode = "scroll",
 		handlers = {
 			"default": {
 				mousedown: function(e) {
@@ -109,13 +109,13 @@ var altoedit = (function(me) {
 
 	me.resizeToFull = function() {
 		$("canvas")
-			.attr("height", $(window).height() - $("#alto-string").height())
+			.attr("height", $(window).height() - $("#buttons").height() - $("#alto-string").height())
 			.attr("width", $(window).width())
 			.trigger("recalibrate");
 		return me;
 	};
-	me.toggleWheelMode = function() {
-		wheelMode = wheelMode === 'zoom' ? 'scroll' : 'zoom';
+	me.setWheelMode = function(md) {
+		wheelMode = md;
 	};
 
 	me.onchange = function(p, cx) {
@@ -153,6 +153,7 @@ var altoedit = (function(me) {
 		input
 			.val(rect.content)
 			.attr("data-id", rect.id)
+			.attr("data-last-val", rect.content)
 			.show()
 			.focus();
 		me.paintOverlay();
@@ -160,11 +161,13 @@ var altoedit = (function(me) {
 	};
 
 	me.showStringNode = function(node) {
+		$("#alto-string *").hide();
 		$("#alto-string input").val("");
 		for(var i in node.attributes) {
 			if(node.attributes[i].nodeValue) {
 				$("#alto-string input[name='" + node.attributes[i].name + "']")
-					.val(node.attributes[i].nodeValue);
+					.val(node.attributes[i].nodeValue)
+					.show().prev().show();
 			}
 		}
 	};
@@ -243,7 +246,11 @@ var altoedit = (function(me) {
 			if(e.keyCode === 16) {
 				$(this).removeAttr("data-shift-down");
 			}
-			$(this).trigger("change");
+			
+			if($(this).val() !== $(this).attr("data-last-val")) {
+				$(this).trigger("change");
+			}
+			$(this).attr("data-last-val", $(this).val());
 		}).on("change", function(e) {
 			rects["focusRect"].content = $(this).val();
 			me.setAltoContent($(alto).find("[ID=" + $(this).attr("data-id") +"]"), $(this).val(), 

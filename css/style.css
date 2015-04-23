@@ -12,19 +12,35 @@ body {
 }
 #buttons {
 	position: absolute;
-	height: 5px;
-	overflow: hidden;
-	opacity: 0;
+	height: 25px;
+	line-height: 23px;
+	bottom: 25px;
 	width: 100%;
-	background-color: white;
+	background-color: #ddd;
+	border-bottom: 1px solid #aaa;
 	z-index: 1;
-	
 }
 
-#buttons:hover {
+#alto-string {
+	font-size: 12px;
+	color: purple;
+	position: absolute;
+	z-index: 1;
 	height: 25px;
-	opacity: 1;
+	line-height: 23px;
+	bottom: 0;
+	background-color: #ddd;
+	width: 100%;
 }
+#alto-string span {
+	color: blue;
+}
+
+#alto-string span,
+#alto-string input {
+	display: none;
+}
+
 #overlay {
 	opacity: 0.8;
 }
@@ -33,14 +49,22 @@ body {
 	position: absolute;
 }
 
-input {
-	width: 80px;
+input[name='HPOS'],
+input[name='VPOS'],
+input[name='WIDTH'],
+input[name='HEIGHT'],
+input[name='WC'] {
+	width: 30px;
+	text-align: right;
+}
+input[name='ID'] {
+	width: 100px;
+}
+input[name='CONTENT'],
+input[name='SUBS_CONTENT'],
+input[name='SUBS_TYPE'],
+input[name='CC'] {
+	width: 150px;
 }
 
-#alto-string {
-	position: absolute;
-	z-index: 1;
-	bottom: 0;
-	background-color:white;
-	width: 100%;
-}
+
