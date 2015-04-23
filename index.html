@@ -38,6 +38,21 @@
 				<input type="text" name="CC" disabled /> 
 			/&gt;
 		</div>
+		<div id="alto-line">
+			&lt;TextLine 
+				<span>ID=</span>
+				<input type="text" name="ID" disabled />
+				<span>HPOS=</span>
+				<input type="text" name="HPOS" class="number" />
+				<span>VPOS=</span>
+				<input type="text" name="VPOS" class="number" />
+				<span>WIDTH=</span>
+				<input type="text" name="WIDTH" class="number" />
+				<span>HEIGHT=</span>
+				<input type="text" name="HEIGHT" class="number" />
+			/&gt;
+		</div>
+
 		<div id="buttons">
 			<button onclick="altoedit.save()">Opslaan</button>
 			<input id="wheelMode-scroll" onchange="altoedit.setWheelMode(this.value)" type="radio" name="wheelMode" value="scroll" checked />
@@ -50,7 +65,7 @@
 				success: function(alto) {
 					altoedit
 						.setCanvas($("#canvas"), $("#overlay"))
-						.init("ddd:010707698:mpeg21:p001", alto, $("#input"), $("#alto-string"));
+						.init("ddd:010707698:mpeg21:p001", alto, $("#input"), $("#alto-string"), $("#alto-line"));
 				}
 			});
 

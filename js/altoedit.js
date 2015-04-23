@@ -1,6 +1,7 @@
 var altoedit = (function(me) {
 	var canvas, overlay, ctx, alto, input,
-		altoStrings = {}, altoStringDiv,
+		altoStrings = {},
+		altoStringDiv, altoLineDiv,
 		rects = {},
 		params = {}, 
 		resizeDelay = -1,
@@ -66,7 +67,9 @@ var altoedit = (function(me) {
 
 	function initAltoNodes() {
 		var result = alto.getElementsByTagName("String");
+		
 		for(var i = 0; i < result.length; i++) {
+			var altoLine = $(result[i]).parents("TextLine")[0];
 			var rect = {
 				x: parseInt(result[i].getAttribute("HPOS"),10),
 				y: parseInt(result[i].getAttribute("VPOS"),10),
@@ -75,7 +78,8 @@ var altoedit = (function(me) {
 				id: result[i].getAttribute("ID"),
 				content: result[i].getAttribute("CONTENT"),
 				next: result[i+1] ? result[i+1].getAttribute("ID") : false,
-				prev: result[i-1] ? result[i-1].getAttribute("ID") : false
+				prev: result[i-1] ? result[i-1].getAttribute("ID") : false,
+				textLine: altoLine
 			};
 			var xKeyMin = parseInt(Math.floor(rect.x / 100),10),
 				yKeyMin = parseInt(Math.floor(rect.y / 100),10),
@@ -99,9 +103,10 @@ var altoedit = (function(me) {
 		return me;
 	};
 
-	me.init = function(id, altoDoc, inp, asDiv) {
+	me.init = function(id, altoDoc, inp, asDiv, alDiv) {
 		alto = altoDoc;
 		altoStringDiv = asDiv;
+		altoLineDiv = alDiv;
 		input = inp;
 		initAltoNodes();
 		params.id = id + ":image";
@@ -113,7 +118,7 @@ var altoedit = (function(me) {
 
 	me.resizeToFull = function() {
 		$("canvas")
-			.attr("height", $(window).height() - $("#buttons").height() - altoStringDiv.height())
+			.attr("height", $(window).height() - $("#buttons").height() - altoStringDiv.height() - altoLineDiv.height())
 			.attr("width", $(window).width())
 			.trigger("recalibrate");
 		return me;
@@ -140,10 +145,23 @@ var altoedit = (function(me) {
 		for(var i in altoStrings[atMap.x][atMap.y]) {
 			var rect = altoStrings[atMap.x][atMap.y][i];
 			if(realPos.x >= rect.x && realPos.y >= rect.y && realPos.x <= rect.x + rect.w && realPos.y <= rect.y + rect.h) {
-				me.addRect(rect, "stringRect", "red", "rgba(0,0,255,0.1"); 
+				me.addRect(rect, "stringRect", "red", "rgba(0,0,255,0.1");
 				break;
 			}
 		}
+		me.paintOverlay();
+	};
+
+	me.addTextLineRect = function(textLine) {
+		var rect = {
+			x: parseInt(textLine.getAttribute("HPOS"),10),
+			y: parseInt(textLine.getAttribute("VPOS"),10),
+			w: parseInt(textLine.getAttribute("WIDTH"),10),
+			h: parseInt(textLine.getAttribute("HEIGHT"),10),
+			id: textLine.getAttribute("ID")
+		};
+		me.addRect(rect, "textLineRect", "rgba(0,255,255, 0.8", "rgba(0,0,0,0)");
+		me.showAltoNode(textLine, altoLineDiv);
 		me.paintOverlay();
 	};
 
@@ -151,8 +169,10 @@ var altoedit = (function(me) {
 		rects[id] = $.extend(rect, {stroke: stroke, fill: fill});
 		me.paintOverlay();
 	};
+
 	me.showInput = function(rect) {
 		me.addRect(rect, "focusRect", "blue", "rgba(128,128,255,0.1)");
+		me.addTextLineRect(rect.textLine);
 		me.repositionInput();
 		input
 			.val(rect.content)
@@ -161,15 +181,15 @@ var altoedit = (function(me) {
 			.show()
 			.focus();
 		me.paintOverlay();
-		me.showStringNode($(alto).find("[ID=" + rect.id +"]").get(0));
+		me.showAltoNode($(alto).find("[ID=" + rect.id +"]").get(0), altoStringDiv);
 	};
 
-	me.showStringNode = function(node) {
-		altoStringDiv.find("*").hide();
-		altoStringDiv.find("input").val("");
+	me.showAltoNode = function(node, div) {
+		div.find("*").hide();
+		div.find("input").val("");
 		for(var i in node.attributes) {
 			if(node.attributes[i].nodeValue) {
-				altoStringDiv.find("input[name='" + node.attributes[i].name + "']")
+				div.find("input[name='" + node.attributes[i].name + "']")
 					.val(node.attributes[i].nodeValue)
 					.attr("data-last-val", node.attributes[i].nodeValue)
 					.show().prev().show();
@@ -225,7 +245,7 @@ var altoedit = (function(me) {
 		stringNode.attr("CONTENT", value);
 		stringNode.attr("WC", "1.0")
 		stringNode.attr("CC", Array(value.length + 1).join("0"));
-		me.showStringNode(stringNode.get(0));
+		me.showAltoNode(stringNode.get(0), altoStringDiv);
 	};
 	me.save = function() {
 		$.ajax("save.php", {
@@ -255,6 +275,34 @@ var altoedit = (function(me) {
 		me.paintOverlay();
 	};
 
+	me.addNumberHandlers = function(inp, rectType) {
+		$(inp).on("keyup", function(e) {
+			if($(this).val() !== $(this).attr("data-last-val")) {
+				$(this).trigger("change");
+			}
+			$(this).attr("data-last-val", $(this).val());
+		}).on("keydown", function(e) {
+			if(e.keyCode === 40) {
+				this.value = parseInt(this.value, 10) - (me.shiftDown ? 5 : 1);
+				$(this).trigger("change");
+				return e.preventDefault();
+			} else if(e.keyCode === 38) {
+				this.value = parseInt(this.value, 10) + (me.shiftDown ? 5 : 1);
+				$(this).trigger("change");
+				return e.preventDefault();
+			}
+		}).on("focus", function() {
+			this.setSelectionRange(0, this.value.length);
+		}).on("change", function() {
+			if(!this.value.match(/^[0-9]+$/)) {
+				this.value = $(this).attr("data-last-val");
+				this.setSelectionRange(0, this.value.length);
+			} else {
+				me.updateDimension(this.name, this.value, rects[rectType]);
+			}
+		});
+	};
+ 
 	me.initViewer = function() {
 		input.on("keydown", function(e) {
 			if(e.keyCode === 9 && rects["focusRect"]) {
@@ -278,32 +326,13 @@ var altoedit = (function(me) {
 					rects["focusRect"].prev, rects["focusRect"].next);
 		});
 
+		
 		altoStringDiv.find("input.number").each(function(i, inp) {
-			$(inp).on("keyup", function(e) {
-				if($(this).val() !== $(this).attr("data-last-val")) {
-					$(this).trigger("change");
-				}
-				$(this).attr("data-last-val", $(this).val());
-			}).on("keydown", function(e) {
-				if(e.keyCode === 40) {
-					this.value = parseInt(this.value, 10) - (me.shiftDown ? 5 : 1);
-					$(this).trigger("change");
-					return e.preventDefault();
-				} else if(e.keyCode === 38) {
-					this.value = parseInt(this.value, 10) + (me.shiftDown ? 5 : 1);
-					$(this).trigger("change");
-					return e.preventDefault();
-				}
-			}).on("focus", function() {
-				this.setSelectionRange(0, this.value.length);
-			}).on("change", function() {
-				if(!this.value.match(/^[0-9]+$/)) {
-					this.value = $(this).attr("data-last-val");
-					this.setSelectionRange(0, this.value.length);
-				} else {
-					me.updateDimension(this.name, this.value, rects["focusRect"]);
-				}
-			});
+			me.addNumberHandlers(inp, "focusRect");
+		});
+
+		altoLineDiv.find("input.number").each(function(i, inp) {
+			me.addNumberHandlers(inp, "textLineRect");
 		});
 
 		canvas
