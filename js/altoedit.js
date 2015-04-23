@@ -31,6 +31,7 @@ var altoedit = (function(me) {
 					} else {
 						me.showAltoStringAt(e.clientX, e.clientY);
 					}
+					me.adaptCursorStyle(e.clientX, e.clientY);
 				},
 				mousewheel: function(e, which) {
 					if (which === 0) { return; }
@@ -123,10 +124,24 @@ var altoedit = (function(me) {
 			.trigger("recalibrate");
 		return me;
 	};
+
 	me.setWheelMode = function(md) {
 		wheelMode = md;
 	};
 
+	me.adaptCursorStyle = function(x,y) {
+		if(!rects["focusRect"]) { return; }
+		var realPos = {
+			x: parseInt(x / params.s + (params.x / params.s), 10),
+			y: parseInt(y / params.s + (params.y / params.s), 10)
+		};
+		if(realPos.y >= rects["focusRect"].y - 3  &&
+			realPos.y + 1 <= rects["focusRect"].y + 3) {
+			overlay.addClass("resiz-ns");
+		} else {
+			overlay.removeClass("resiz-ns");
+		}
+	};
 	me.onchange = function(p, cx) {
 		params = p;
 		me.paintOverlay();
