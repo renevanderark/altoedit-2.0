@@ -24,13 +24,15 @@ var altoedit = (function(me) {
 				},
 				mouseup: function(e) {
 					if(mode === "resize") { mode = "default"; input.show(); }
+
+					var stringRect;
 					if(state === "down" && (movement.x !== 0 || movement.y !== 0)) {
 						canvas.trigger('paint');
 						if(input.position().top + input.height() < $(window).height()) {
 							input.focus();
 						}
-					} else if(rects["stringRect"]) {
-						me.showInput(rects["stringRect"]);
+					} else if(stringRect = me.findAltoStringAt(e.clientX, e.clientY)) {
+						me.showInput(stringRect);
 					}
 				},
 				mouseout: function(e) {
@@ -55,6 +57,13 @@ var altoedit = (function(me) {
 						case "scroll":
 							canvas.trigger('moveBy', [{x: 0, y: 30 * which}, false]);
 							break;
+					}
+				},
+				dblclick: function(e) {
+					if(rects["focusRect"] && rects["focusRect"].textLine &&
+						me.overAltoNode(e.clientX, e.clientY, rects["focusRect"].textLine) &&
+						!withinRealBounds(e.clientX, e.clientY, rects["focusRect"])) {
+						console.log(e.clientX, e.clientY);
 					}
 				}
 			}
@@ -131,6 +140,32 @@ var altoedit = (function(me) {
 		}
 	}
 
+	function getRealPos(x, y) {
+		return {
+			x: parseInt(x / params.s + (params.x / params.s), 10),
+			y: parseInt(y / params.s + (params.y / params.s), 10)
+		};
+	}
+
+	function rectFromAltoNode(node) {
+		return {
+			x: parseInt(node.getAttribute("HPOS"),10),
+			y: parseInt(node.getAttribute("VPOS"),10),
+			w: parseInt(node.getAttribute("WIDTH"),10),
+			h: parseInt(node.getAttribute("HEIGHT"),10),
+			id: node.getAttribute("ID")
+		};
+	}
+
+	function withinBounds(pos, rect) {
+		return pos.x >= rect.x && pos.y >= rect.y && pos.x <= rect.x + rect.w && pos.y <= rect.y + rect.h;
+	}
+
+	function withinRealBounds(x, y, rect) {
+		return withinBounds(getRealPos(x, y), rect);
+		
+	}
+
 	me.setCanvas = function (c, o) {
 		canvas = c;
 		overlay = o;
@@ -163,10 +198,8 @@ var altoedit = (function(me) {
 	};
 
 	me.adaptCursorStyle = function(x,y) {
-		var realPos = {
-			x: parseInt(x / params.s + (params.x / params.s), 10),
-			y: parseInt(y / params.s + (params.y / params.s), 10)
-		}, ids = ["focusRect", "textLineRect"], t = l = false, i;
+		var realPos = getRealPos(x, y), 
+			ids = ["focusRect", "textLineRect"], t = l = false, i;
 
 		overlay.removeClass("resiz-ns").removeClass("resiz-ew");
 		currentResize = false;
@@ -206,34 +239,38 @@ var altoedit = (function(me) {
 		me.paintOverlay();
 	};
 
-	me.showAltoStringAt = function(x, y) {
-		var realPos = {
-			x: parseInt(x / params.s + (params.x / params.s), 10),
-			y: parseInt(y / params.s + (params.y / params.s), 10)
-		};
+	me.overAltoNode = function(x, y, node) {
+		var realPos = getRealPos(x, y),
+			rect = rectFromAltoNode(node);
+		return withinBounds(realPos, rect);
+	};
+
+	me.findAltoStringAt = function(x, y) {
+		var realPos = getRealPos(x, y);
 		var atMap = {
 			x: parseInt(Math.floor(realPos.x / 100), 10),
 			y: parseInt(Math.floor(realPos.y / 100), 10)
 		};
 		if(!(altoStrings[atMap.x] && altoStrings[atMap.x][atMap.y])) { return; }
+
 		for(var i in altoStrings[atMap.x][atMap.y]) {
 			var rect = altoStrings[atMap.x][atMap.y][i];
-			if(realPos.x >= rect.x && realPos.y >= rect.y && realPos.x <= rect.x + rect.w && realPos.y <= rect.y + rect.h) {
-				me.addRect(rect, "stringRect", "rgba(255,0,0,0.4)", "rgba(0,0,255,0.1");
-				break;
+			if(withinBounds(realPos, rect)) {
+				return rect;
 			}
 		}
+		return false;
+	};
+
+	me.showAltoStringAt = function(x, y) {
+		var rect;
+		if(!(rect = me.findAltoStringAt(x, y))) { return; }
+		me.addRect(rect, "stringRect", "rgba(255,0,0,0.4)", "rgba(0,0,255,0.1");
 		me.paintOverlay();
 	};
 
 	me.addTextLineRect = function(textLine) {
-		var rect = {
-			x: parseInt(textLine.getAttribute("HPOS"),10),
-			y: parseInt(textLine.getAttribute("VPOS"),10),
-			w: parseInt(textLine.getAttribute("WIDTH"),10),
-			h: parseInt(textLine.getAttribute("HEIGHT"),10),
-			id: textLine.getAttribute("ID")
-		};
+		var rect = rectFromAltoNode(textLine);
 		me.addRect(rect, "textLineRect", "rgba(0,255,255, 0.8", "rgba(0,0,0,0)");
 		me.showAltoNode(textLine, altoLineDiv);
 		me.paintOverlay();
@@ -439,6 +476,9 @@ var altoedit = (function(me) {
 			})
 			.on("mousewheel", function(e, which) {
 				handlers[mode].mousewheel(e, which);
+			})
+			.on("dblclick", function(e) {
+				handlers[mode].dblclick(e);
 			});
 		ctx = overlay.get(0).getContext('2d');
 		$(window).on("mouseup", function(e) { state = "up"; });

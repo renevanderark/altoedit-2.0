@@ -10,7 +10,13 @@ body {
 	position: absolute;
 	top: 0px;
 	left: 0;
+	cursor: url(openhand.cur), default;
 }
+
+#overlay:active {
+	cursor: url(closed_hand.cur), default;
+}
+
 #overlay.resiz-ns {
 	cursor: url(resiz-ns.cur), default;
 }
