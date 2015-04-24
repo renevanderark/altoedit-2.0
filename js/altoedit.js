@@ -1,6 +1,7 @@
 var altoedit = (function(me) {
 	var canvas, overlay, ctx, alto, input,
 		altoStrings = {},
+		currentResize = false,
 		altoStringDiv, altoLineDiv,
 		rects = {},
 		params = {}, 
@@ -14,8 +15,15 @@ var altoedit = (function(me) {
 		handlers = {
 			"default": {
 				mousedown: function(e) {
+					if(currentResize) {
+						mode = "resize";
+						input.hide();
+					} else {
+						mode = "default";
+					}
 				},
 				mouseup: function(e) {
+					if(mode === "resize") { mode = "default"; input.show(); }
 					if(state === "down" && (movement.x !== 0 || movement.y !== 0)) {
 						canvas.trigger('paint');
 						if(input.position().top + input.height() < $(window).height()) {
@@ -26,6 +34,7 @@ var altoedit = (function(me) {
 					}
 				},
 				mouseout: function(e) {
+					if(mode === "resize") { mode = "default"; }
 				},
 				mousemove: function(e) {
 					if(state === "down") {
@@ -50,7 +59,21 @@ var altoedit = (function(me) {
 				}
 			}
 		};
-
+	handlers.resize = $.extend({}, handlers.default, {
+		mousemove: function(e) {
+			if(!currentResize) { mode = "default"; return }
+			var realMov =  parseInt(movement[currentResize.movName] / params.s, 10),
+				propVal = currentResize.rect[currentResize.dimName] + realMov;
+			me.updateDimension(currentResize.propName, propVal, currentResize.rect);
+			if(currentResize.dimName === 'x') {
+				propVal = currentResize.rect.w - realMov;
+				me.updateDimension("WIDTH", propVal, currentResize.rect);
+			} else if (currentResize.dimName === 'y') {
+				propVal = currentResize.rect.h - realMov;
+				me.updateDimension("HEIGHT", propVal, currentResize.rect);
+			}
+		}
+	});
 	me.ctrlDown = false;
 	me.shiftDown = true;
 
@@ -135,19 +158,39 @@ var altoedit = (function(me) {
 		var realPos = {
 			x: parseInt(x / params.s + (params.x / params.s), 10),
 			y: parseInt(y / params.s + (params.y / params.s), 10)
-		};
+		}, ids = ["focusRect", "textLineRect"], t = l = false, i;
+
 		overlay.removeClass("resiz-ns").removeClass("resiz-ew");
-		
-		if((realPos.x >= rects["focusRect"].x && realPos.x <= rects["focusRect"].x + rects["focusRect"].w) && (
-			(realPos.y >= rects["focusRect"].y - 2  && realPos.y <= rects["focusRect"].y + 2) ||
-			(realPos.y >= rects["focusRect"].y + rects["focusRect"].h - 2  && realPos.y <= rects["focusRect"].y + rects["focusRect"].h + 2))) {
-			overlay.addClass("resiz-ns");
-		} else if((realPos.y >= rects["focusRect"].y && realPos.y <= rects["focusRect"].y + rects["focusRect"].h) && (
-			(realPos.x >= rects["focusRect"].x - 2  && realPos.x <= rects["focusRect"].x + 2) ||
-			(realPos.x >= rects["focusRect"].x + rects["focusRect"].w - 2  && realPos.x <= rects["focusRect"].x + rects["focusRect"].w + 2))) {
-			overlay.addClass("resiz-ew");
+		currentResize = false;
+		for(i in ids) {
+			var id = ids[i];
+			if(!rects[id]) { continue; }
+			if((realPos.x >= rects[id].x && realPos.x <= rects[id].x + rects[id].w) && (
+				(t = realPos.y >= rects[id].y - 2  && realPos.y <= rects[id].y + 2) ||
+				(realPos.y >= rects[id].y + rects[id].h - 2  && realPos.y <= rects[id].y + rects[id].h + 2))) {
+				overlay.addClass("resiz-ns");
+				currentResize = {
+					rect: rects[id], 
+					dimName: t ? "y" : "h", 
+					propName: t ? "VPOS" : "HEIGHT",
+					movName : "y"
+				};
+				break;
+			} else if((realPos.y >= rects[id].y && realPos.y <= rects[id].y + rects[id].h) && (
+				(l = realPos.x >= rects[id].x - 2  && realPos.x <= rects[id].x + 2) ||
+				(realPos.x >= rects[id].x + rects[id].w - 2  && realPos.x <= rects[id].x + rects[id].w + 2))) {
+				overlay.addClass("resiz-ew");
+				currentResize = {
+					rect: rects[id], 
+					dimName: l ? "x" : "w", 
+					propName: l ? "HPOS" : "WIDTH",
+					movName: "x"
+				};
+				break;
+			}
 		}
 	};
+
 	me.onchange = function(p, cx) {
 		params = p;
 		me.paintOverlay();
@@ -166,7 +209,7 @@ var altoedit = (function(me) {
 		for(var i in altoStrings[atMap.x][atMap.y]) {
 			var rect = altoStrings[atMap.x][atMap.y][i];
 			if(realPos.x >= rect.x && realPos.y >= rect.y && realPos.x <= rect.x + rect.w && realPos.y <= rect.y + rect.h) {
-				me.addRect(rect, "stringRect", "red", "rgba(0,0,255,0.1");
+				me.addRect(rect, "stringRect", "rgba(255,0,0,0.4)", "rgba(0,0,255,0.1");
 				break;
 			}
 		}
