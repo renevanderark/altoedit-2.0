@@ -59,19 +59,27 @@ var altoedit = (function(me) {
 				}
 			}
 		};
+
 	handlers.resize = $.extend({}, handlers.default, {
 		mousemove: function(e) {
 			if(!currentResize) { mode = "default"; return }
 			var realMov =  parseInt(movement[currentResize.movName] / params.s, 10),
-				propVal = currentResize.rect[currentResize.dimName] + realMov;
+				propVal = currentResize.rect[currentResize.dimName] + realMov,
+				altoDiv = currentResize.rectType === "textLineRect" ? altoLineDiv :  altoStringDiv;
 			me.updateDimension(currentResize.propName, propVal, currentResize.rect);
 			if(currentResize.dimName === 'x') {
 				propVal = currentResize.rect.w - realMov;
-				me.updateDimension("WIDTH", propVal, currentResize.rect);
+				if(propVal > 0) {
+					me.updateDimension("WIDTH", propVal, currentResize.rect);
+				}
 			} else if (currentResize.dimName === 'y') {
 				propVal = currentResize.rect.h - realMov;
-				me.updateDimension("HEIGHT", propVal, currentResize.rect);
+				if(propVal > 0) {
+					me.updateDimension("HEIGHT", propVal, currentResize.rect);
+				}
 			}
+
+			me.showAltoNode($(alto).find("[ID=" + currentResize.rect.id +"]").get(0), altoDiv);
 		}
 	});
 	me.ctrlDown = false;
@@ -170,7 +178,8 @@ var altoedit = (function(me) {
 				(realPos.y >= rects[id].y + rects[id].h - 2  && realPos.y <= rects[id].y + rects[id].h + 2))) {
 				overlay.addClass("resiz-ns");
 				currentResize = {
-					rect: rects[id], 
+					rect: rects[id],
+					rectType: id,
 					dimName: t ? "y" : "h", 
 					propName: t ? "VPOS" : "HEIGHT",
 					movName : "y"
@@ -181,7 +190,8 @@ var altoedit = (function(me) {
 				(realPos.x >= rects[id].x + rects[id].w - 2  && realPos.x <= rects[id].x + rects[id].w + 2))) {
 				overlay.addClass("resiz-ew");
 				currentResize = {
-					rect: rects[id], 
+					rect: rects[id],
+					rectType: id,
 					dimName: l ? "x" : "w", 
 					propName: l ? "HPOS" : "WIDTH",
 					movName: "x"
