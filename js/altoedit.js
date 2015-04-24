@@ -25,6 +25,8 @@ var altoedit = (function(me) {
 						me.showInput(rects["stringRect"]);
 					}
 				},
+				mouseout: function(e) {
+				},
 				mousemove: function(e) {
 					if(state === "down") {
 						canvas.trigger('moveBy', [movement, false]);
@@ -130,16 +132,20 @@ var altoedit = (function(me) {
 	};
 
 	me.adaptCursorStyle = function(x,y) {
-		if(!rects["focusRect"]) { return; }
 		var realPos = {
 			x: parseInt(x / params.s + (params.x / params.s), 10),
 			y: parseInt(y / params.s + (params.y / params.s), 10)
 		};
-		if(realPos.y >= rects["focusRect"].y - 3  &&
-			realPos.y + 1 <= rects["focusRect"].y + 3) {
+		overlay.removeClass("resiz-ns").removeClass("resiz-ew");
+		
+		if((realPos.x >= rects["focusRect"].x && realPos.x <= rects["focusRect"].x + rects["focusRect"].w) && (
+			(realPos.y >= rects["focusRect"].y - 2  && realPos.y <= rects["focusRect"].y + 2) ||
+			(realPos.y >= rects["focusRect"].y + rects["focusRect"].h - 2  && realPos.y <= rects["focusRect"].y + rects["focusRect"].h + 2))) {
 			overlay.addClass("resiz-ns");
-		} else {
-			overlay.removeClass("resiz-ns");
+		} else if((realPos.y >= rects["focusRect"].y && realPos.y <= rects["focusRect"].y + rects["focusRect"].h) && (
+			(realPos.x >= rects["focusRect"].x - 2  && realPos.x <= rects["focusRect"].x + 2) ||
+			(realPos.x >= rects["focusRect"].x + rects["focusRect"].w - 2  && realPos.x <= rects["focusRect"].x + rects["focusRect"].w + 2))) {
+			overlay.addClass("resiz-ew");
 		}
 	};
 	me.onchange = function(p, cx) {
@@ -181,6 +187,10 @@ var altoedit = (function(me) {
 	};
 
 	me.addRect = function(rect, id, stroke, fill) {
+		if(id === "stringRect" && rects["focusRect"] && rects["focusRect"].id === rect.id) { 
+			delete(rects["stringRect"]);
+			return;
+		}
 		rects[id] = $.extend(rect, {stroke: stroke, fill: fill});
 		me.paintOverlay();
 	};
@@ -228,7 +238,6 @@ var altoedit = (function(me) {
 			ctx.beginPath();
 			ctx.strokeStyle = rects[id].stroke || "red";
 			ctx.fillStyle = rects[id].fill || "red";
-
 			var rect = {
 				x: parseInt(rects[id].x * params.s - params.x, 10),
 				y: parseInt(rects[id].y * params.s - params.y, 10),
@@ -372,10 +381,14 @@ var altoedit = (function(me) {
 				handlers[mode].mouseup(e);
 				state = "up";
 			})
+			.on("mouseout", function(e) {
+				handlers[mode].mouseout(e);
+			})
 			.on("mousewheel", function(e, which) {
 				handlers[mode].mousewheel(e, which);
 			});
 		ctx = overlay.get(0).getContext('2d');
+		$(window).on("mouseup", function(e) { state = "up"; });
 	}
 
 	return me;

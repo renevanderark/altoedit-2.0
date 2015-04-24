@@ -14,6 +14,9 @@ body {
 #overlay.resiz-ns {
 	cursor: url(resiz-ns.cur), default;
 }
+#overlay.resiz-ew {
+	cursor: url(resiz-ew.cur), default;
+}
 
 
 #buttons {
