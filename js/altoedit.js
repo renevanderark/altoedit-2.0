@@ -63,7 +63,7 @@ var altoedit = (function(me) {
 					if(rects["focusRect"] && rects["focusRect"].textLine &&
 						me.overAltoNode(e.clientX, e.clientY, rects["focusRect"].textLine) &&
 						!withinRealBounds(e.clientX, e.clientY, rects["focusRect"])) {
-						console.log(e.clientX, e.clientY);
+						me.addAltoStringAt(getRealPos(e.clientX, e.clientY), rects["focusRect"].textLine);
 					}
 				}
 			}
@@ -108,35 +108,41 @@ var altoedit = (function(me) {
 		setTimeout(eventPoll, 20);
 	}
 
+	function mapAltoString(altoString, altoLine, prev, next) {
+		var rect = {
+			x: parseInt(altoString.getAttribute("HPOS"),10),
+			y: parseInt(altoString.getAttribute("VPOS"),10),
+			w: parseInt(altoString.getAttribute("WIDTH"),10),
+			h: parseInt(altoString.getAttribute("HEIGHT"),10),
+			id: altoString.getAttribute("ID"),
+			content: altoString.getAttribute("CONTENT"),
+			next: next,
+			prev: prev,
+			textLine: altoLine
+		};
+		var xKeyMin = parseInt(Math.floor(rect.x / 100),10),
+			yKeyMin = parseInt(Math.floor(rect.y / 100),10),
+			xKeyMax = parseInt(Math.ceil((rect.x + rect.w) / 100),10),
+			yKeyMax = parseInt(Math.ceil((rect.y + rect.h) / 100),10);
+		for(var xKey = xKeyMin; xKey <= xKeyMax; xKey++) {
+			for(var yKey = yKeyMin; yKey <= yKeyMax; yKey++) {
+				altoStrings[xKey] = altoStrings[xKey] || {};
+				altoStrings[xKey][yKey] = altoStrings[xKey][yKey] || [];
+				altoStrings[xKey][yKey].push(rect);
+			}
+		}
+		altoStrings["idmap"] = altoStrings["idmap"] || {};
+		altoStrings["idmap"][rect.id] = rect;
+		return rect;
+	}
+
 	function initAltoNodes() {
 		var result = alto.getElementsByTagName("String");
-		
 		for(var i = 0; i < result.length; i++) {
 			var altoLine = $(result[i]).parents("TextLine")[0];
-			var rect = {
-				x: parseInt(result[i].getAttribute("HPOS"),10),
-				y: parseInt(result[i].getAttribute("VPOS"),10),
-				w: parseInt(result[i].getAttribute("WIDTH"),10),
-				h: parseInt(result[i].getAttribute("HEIGHT"),10),
-				id: result[i].getAttribute("ID"),
-				content: result[i].getAttribute("CONTENT"),
-				next: result[i+1] ? result[i+1].getAttribute("ID") : false,
-				prev: result[i-1] ? result[i-1].getAttribute("ID") : false,
-				textLine: altoLine
-			};
-			var xKeyMin = parseInt(Math.floor(rect.x / 100),10),
-				yKeyMin = parseInt(Math.floor(rect.y / 100),10),
-				xKeyMax = parseInt(Math.ceil((rect.x + rect.w) / 100),10),
-				yKeyMax = parseInt(Math.ceil((rect.y + rect.h) / 100),10);
-			for(var xKey = xKeyMin; xKey <= xKeyMax; xKey++) {
-				for(var yKey = yKeyMin; yKey <= yKeyMax; yKey++) {
-					altoStrings[xKey] = altoStrings[xKey] || {};
-					altoStrings[xKey][yKey] = altoStrings[xKey][yKey] || [];
-					altoStrings[xKey][yKey].push(rect);
-				}
-			}
-			altoStrings["idmap"] = altoStrings["idmap"] || {};
-			altoStrings["idmap"][rect.id] = rect;
+			mapAltoString(result[i], altoLine, 
+				result[i-1] ? result[i - 1].getAttribute("ID") : false,
+				result[i+1] ? result[i + 1].getAttribute("ID") : false);
 		}
 	}
 
@@ -163,7 +169,6 @@ var altoedit = (function(me) {
 
 	function withinRealBounds(x, y, rect) {
 		return withinBounds(getRealPos(x, y), rect);
-		
 	}
 
 	me.setCanvas = function (c, o) {
@@ -267,6 +272,69 @@ var altoedit = (function(me) {
 		if(!(rect = me.findAltoStringAt(x, y))) { return; }
 		me.addRect(rect, "stringRect", "rgba(255,0,0,0.4)", "rgba(0,0,255,0.1");
 		me.paintOverlay();
+	};
+
+	me.addAltoStringAt = function(realPos, textLine) {
+		var siblings = $(textLine).find("String").toArray(),
+			altoString = alto.createElementNS(alto.documentElement.getAttribute("xmlns"), "String"),
+			spNode = alto.createElementNS(alto.documentElement.getAttribute("xmlns"), "SP"), 
+			addIndex = 0, i, leftOf = false, rightOf = false, prev, next, newRect;
+		if(siblings.length === 0) { 
+			alert("Kan geen <String> toevoegen aan lege <TextLine>");
+			return;
+		}
+		for(i = 0; i < siblings.length; i++) {
+			var curIndex = parseInt(siblings[i].getAttribute("ID").replace(/^.+-/, ""));
+			if(addIndex < curIndex) { addIndex = curIndex; }
+			if((!leftOf || realPos.x - parseInt(leftOf.getAttribute("HPOS")) >
+				realPos.x - parseInt(siblings[i].getAttribute("HPOS"))) &&
+				realPos.x - parseInt(siblings[i].getAttribute("HPOS")) > 0) {
+				leftOf = siblings[i];
+			}
+		}
+
+		if(!leftOf) { rightOf = siblings[0]; }
+
+		altoString.setAttribute("ID", (leftOf || rightOf).getAttribute("ID").replace(/-[0-9]+$/, "") + "-" + (addIndex + 1));
+		altoString.setAttribute("HPOS", realPos.x - 15)
+		altoString.setAttribute("VPOS", textLine.getAttribute("VPOS"))
+		altoString.setAttribute("HEIGHT", textLine.getAttribute("HEIGHT"))
+		altoString.setAttribute("WIDTH", 30)
+		altoString.setAttribute("WC", 1)
+		altoString.setAttribute("CC", "")
+		altoString.setAttribute("CONTENT", "");
+
+		spNode.setAttribute("ID", (leftOf || rightOf).getAttribute("ID").replace(/-[0-9]+$/, "").replace("ST", "SP") + "-" + (addIndex + 1));
+		spNode.setAttribute("VPOS", textLine.getAttribute("VPOS"))
+		spNode.setAttribute("HEIGHT", textLine.getAttribute("HEIGHT"))
+
+		if(leftOf) {
+			prev = altoStrings["idmap"][leftOf.getAttribute("ID")];
+			next = altoStrings["idmap"][prev.next];
+
+			spNode.setAttribute("HPOS", parseInt(leftOf.getAttribute("HPOS")) + parseInt(leftOf.getAttribute("WIDTH")));
+			spNode.setAttribute("WIDTH", 
+				parseInt(altoString.getAttribute("HPOS")) - parseInt(spNode.getAttribute("HPOS")) > 0 ? 
+				parseInt(altoString.getAttribute("HPOS")) - parseInt(spNode.getAttribute("HPOS")) : 0);
+
+			$(leftOf).after(spNode);
+			$(spNode).after(altoString);
+		} else {
+			next = altoStrings["idmap"][rightOf.getAttribute("ID")];
+			prev = altoStrings["idmap"][next.prev];
+
+			spNode.setAttribute("HPOS", parseInt(altoString.getAttribute("HPOS")) + parseInt(altoString.getAttribute("WIDTH")));
+			spNode.setAttribute("WIDTH", 
+				parseInt(rightOf.getAttribute("HPOS")) - parseInt(spNode.getAttribute("HPOS")) > 0 ? 
+				parseInt(rightOf.getAttribute("HPOS")) - parseInt(spNode.getAttribute("HPOS")) : 0);
+
+			$(rightOf).before(spNode);
+			$(spNode).before(altoString);
+		}
+		newRect = mapAltoString(altoString, textLine, prev.id, next.id);
+		prev.next = newRect.id;
+		next.prev = newRect.id;
+		me.showInput(newRect);
 	};
 
 	me.addTextLineRect = function(textLine) {
