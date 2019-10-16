@@ -92,7 +92,7 @@ var altoedit = (function(me) {
 		}
 	});
 	me.ctrlDown = false;
-	me.shiftDown = true;
+	me.shiftDown = false;
 
 	function eventPoll() {
 		if(resizeDelay > 0) { resizeDelay--;  }
