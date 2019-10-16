@@ -61,11 +61,11 @@
 			<label for="wheelMode-zoom">Zoomen</label>
 		</div>
 		<script type="text/javascript">
-			$.ajax("alto.xml", {
+			$.ajax("/altoedit-poc/content/alto.xml", {
 				success: function(alto) {
 					altoedit
 						.setCanvas($("#canvas"), $("#overlay"))
-						.init("ddd:010707698:mpeg21:p001", alto, $("#input"), $("#alto-string"), $("#alto-line"));
+						.init("content/image.jp2", alto, $("#input"), $("#alto-string"), $("#alto-line"));
 				}
 			});
 

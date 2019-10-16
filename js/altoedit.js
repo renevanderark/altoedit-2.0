@@ -183,7 +183,7 @@ var altoedit = (function(me) {
 		altoLineDiv = alDiv;
 		input = inp;
 		initAltoNodes();
-		params.id = id + ":image";
+		params.id = id;
 		me.resizeToFull().initViewer();
 		$(window).on("resize", function() { resizeDelay = 40; });
 		eventPoll();
@@ -518,9 +518,9 @@ var altoedit = (function(me) {
 		});
 
 		canvas
-			.imageViewerClient("http://imageviewer.kb.nl/ImagingService/imagingService", {
+			.imageViewerClient("http://localhost:9080/imagingService", {
 				params: params,
-				previewScale: 0.4,
+				previewScale: 0.5,
 				onchange: me.onchange
 			});
 
